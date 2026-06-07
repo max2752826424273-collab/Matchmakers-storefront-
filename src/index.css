@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-coral: #FF5A5F;
+  --color-primary-charcoal: #2C333A;
+  --color-secondary-teal: #00A699;
+  --color-neutral-light: #F7F7F7;
+  --color-accent-yellow: #FFB400;
+
+  --font-heading: "Montserrat", sans-serif;
+  --font-body: "Inter", "Open Sans", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply font-body bg-neutral-light text-primary-charcoal;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold;
+  }
+}
