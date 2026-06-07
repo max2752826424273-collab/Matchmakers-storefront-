@@ -1,10 +1,41 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { Trash2, ArrowRight, ShoppingBag, Heart } from 'lucide-react';
+import { Trash2, ArrowRight, ShoppingBag, Heart, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
 
 export const CartPage: React.FC = () => {
   const { cart, removeFromCart, cartTotal } = useCart();
+  const [loading, setLoading] = useState(false);
+
+  const handleCheckout = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items: cart }),
+      });
+
+      const session = await response.json();
+      const stripe = await stripePromise;
+      
+      if (stripe) {
+        const { error } = await stripe.redirectToCheckout({
+          sessionId: session.id,
+        });
+        if (error) console.error(error);
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (cart.length === 0) {
     return (
@@ -99,8 +130,19 @@ export const CartPage: React.FC = () => {
               </div>
             </div>
             
-            <button className="w-full bg-primary-charcoal text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition-all shadow-lg mb-4">
-              Proceed to Checkout
+            <button 
+              onClick={handleCheckout}
+              disabled={loading}
+              className="w-full bg-primary-charcoal text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition-all shadow-lg mb-4 flex items-center justify-center disabled:opacity-70"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 animate-spin" size={20} />
+                  Processing...
+                </>
+              ) : (
+                'Proceed to Checkout'
+              )}
             </button>
             <p className="text-center text-xs text-gray-400 px-4">
               Free returns and exchanges within 30 days. Secure encrypted checkout.
